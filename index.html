@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #chat-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            background-color: #eee;
+            padding: 16px;
+            height: 400px;
+            overflow-y: scroll;
+        }
+
+        #chat-input {
+            width: 100%;
+            max-width: 600px;
+            margin: 16px auto;
+            display: flex;
+        }
+
+        #chat-input input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+        }
+
+        #chat-input button {
+            padding: 8px 16px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container"></div>
+    <div id="chat-input">
+        <input type="text" placeholder="Type your message...">
+        <button>Send</button>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        const cloudFunctionURL = '<YOUR_CLOUD_FUNCTION_URL>';
+
+        function addMessageToChat(message, isUserMessage = true) {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            messageElement.style.marginBottom = '8px';
+            messageElement.style.wordWrap = 'break-word';
+            messageElement.style.textAlign = isUserMessage ? 'right' : 'left';
+            $('#chat-container').append(messageElement);
+        }
+
+        function sendMessage(message) {
+            addMessageToChat(message);
+            $.ajax({
+                type: 'POST',
+                url: cloudFunctionURL,
+                contentType: 'application/json',
+                data: JSON.stringify({ message: message }),
+                success: function(response) {
+                    const action = response.action;
+                    addMessageToChat(`Bot: ${action}`, false);
+                },
+                error: function() {
+                    addMessageToChat('Bot: An error occurred. Please try again.', false);
+                }
+            });
+        }
+
+        $('#chat-input button').on('click', function() {
+            const input = $('#chat-input input');
+            const message = input.val().trim();
+            if (message) {
+                input.val('');
+                sendMessage(message);
+            }
+        });
+
+        $('#chat-input input').on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const message = $(this).val().trim();
+                if (message) {
+                    $(this).val('');
+                    sendMessage(message);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
